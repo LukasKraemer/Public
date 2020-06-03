@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <script language="javascript" type="text/javascript" src="js/Chart.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="js/chartsbuilder.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/Chart.min.css">
+    <title>Datenabfrage</title>
+</head>
+<body>
+
+
+    <form id="passwortabfrage">
+        Passwort:<input type="password" name="passwort" id="passwort">
+        <input type="submit" value="">
+        <div id="passwortf"></div>
+    </form>
+
+    <div class="frame">
+        <form id="myform">
+            <input type="date" id="beginn" name="beginn"> Beginn<br> 
+            <input type="date" id="ende" name="ende"> Ende<br> 
+            <select id="types" name="type">  type
+                <option value="bar">Bar</option>
+                <option value="line">Linie</option>
+                <option value="radar">Radar</option>
+                <option value="pie">Pie</option>
+                <option value="doughnut">doughnut</option>
+                <option value="polarArea">polarArea</option>
+                <option value="bubble">Bubble</option>
+                <option value="scatter">scatter</option>
+            </select>
+
+	<select name="auswerungnr">  type
+        	<option value="Auswerung1">Auswertung1</option>
+		<option value="Auswerung2">Auswertung2</option>
+		<option value="Auswerung3">Auswertung3</option>
+      </select>
+      
+      <br>
+      
+      <label for="spalten_html">Welche Spalten möchten Sie sehen?:</label>
+      <br>
+    <div id="spalten"></div> 
+
+<input type="submit" name="abfrage" value="Absenden">
+    
+</form>
+</div>
+
+    <div id="chart-container">
+        <canvas id="mycanvas"></canvas>
+    </div>
+    
+
+</body>
+
+</html>

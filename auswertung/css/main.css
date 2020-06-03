@@ -1,0 +1,14 @@
+#auswertung{
+    max-width: 80%;
+    width: auto;
+
+}
+
+
+form{
+    margin-top: 1%;
+    margin-left:1%;
+    border: 1px solid black;
+    display: inline-block;
+    padding: 30px 30px 30px 30px;
+}
