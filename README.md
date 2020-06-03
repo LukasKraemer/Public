@@ -12,3 +12,9 @@
 
 ##
 - für Windows Nutzer empfele ich XAMPP
+- Configs.ini bei Bedarf vor dem ersten Start bearbeiten
+
+---
+#Auswertung
+
+Php Config beachten, bitte Benutername, Passwort und Passwort für Webzugang in Klartext speichern
