@@ -15,6 +15,6 @@
 - Configs.ini bei Bedarf vor dem ersten Start bearbeiten
 
 ---
-#Auswertung
+# Auswertung
 
-Php Config beachten, bitte Benutername, Passwort und Passwort für Webzugang in Klartext speichern
+- Php Config beachten, bitte Benutername, Passwort und Passwort für Webzugang in Klartext speichern
