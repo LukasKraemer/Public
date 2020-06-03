@@ -30,7 +30,6 @@ fred = threading.Thread() #prozessverwaltung
 sperre = threading.Lock() # prozesssperre
 login_db = str() #überprüfung ob Nutzer an der Datenbank angemeldet ist
 engine= None #Datenbankverbindung
-prozesse= [] # Liste für die Trips
 config.read("config.ini") # Config  File
 
 #Tabellennamen und Pfad
@@ -170,7 +169,7 @@ def tripermitteln():
             ziel = counterc.at[0,'trip_counter']
             if ziel == start:
                 print("alles hochgeladen")
-                return 0
+                return -1
             else:
                 return int(start)
         except:
@@ -181,24 +180,25 @@ def tripermitteln():
 def trip_handler(prozessanzahl):
     '''Verwaltet die Trips, jeder Prozess bekommt ein trip- callback fehlt'''
     global todo_trips
-    todo_trips = list()
+    
     wert= tripermitteln()
+    if wert== -1:
+        exit()
     for i in range(prozessanzahl):
-        todo_trips.append(wert +i)
+        wert= wert+1
+        todo_trips.append(wert)
+
     fertige=0
-    print(todo_trips)
     while True:
+        
         i=0
         for i in range(prozessanzahl):
+            
             if todo_trips[i]=="weiter":
-                todo_trips[i]= todo_trips[i]+prozessanzahl
+                wert= wert+1
+                todo_trips[i]= wert
                 print(todo_trips)
-            if todo_trips[i]=="fertig":
-                fertige=fertige +1
-                print(f'fertig : {fertige}')
-            if fertige == prozessanzahl:
-                print("alle abgeschlossen")
-                exit()            
+           
 
 def trips(move=True):
     '''lädt die txt dateien auf die DB'''
@@ -319,47 +319,58 @@ def sprit(sicherheitsabfrage ="Y"):#parameter sprit
         except:
             print ("Keine Datei gefunden")
 
-def uebersicht(theard_nr ):
+def uebersicht(theard_nr):
+    print("start")
     '''generiert eine Übersicht, tripsweise'''
     global todo_trips
-    tripnummer= todo_trips[theard_nr-1]
+    print(todo_trips)
+
+    while not(isinstance(todo_trips[theard_nr] , int)):
+        time.sleep(0.1)
+    tripnummer= todo_trips[theard_nr]
+   
     #progressBarbuilder_uebersicht(theard_nr)
     query = f"""
     SELECT * FROM {raw_data_tabelle}
     WHERE trip_counter = {tripnummer} ORDER BY Date asc; """
     trip_auswertung3_0 = pd.read_sql_query(query, engine)
     zeilenanzahl = trip_auswertung3_0.shape[0]
-    if(zeilenanzahl == 0):
-        todo_trips[theard_nr-1]= "fertig"
-        print(f'keine Werte gefunden für Trip {tripnummer}')
-        exit()
+   
+    if(zeilenanzahl <= 20):
+        todo_trips[theard_nr]= "weiter"
+        print(f'keine Werte/ zu wenig gefunden für Trip {tripnummer}')
+        if (zeilenanzahl == 0):
+            todo_trips[theard_nr]= "fertig"
+            exit()
+        else:
+            time.sleep(1)
+            uebersicht(theard_nr)    
     df4 = pd.DataFrame(columns=['soc'])
-    update_prozessanzeige(zeilenanzahl+10,"max") 
+ 
     x = 0          
     for x in range(0, zeilenanzahl): #alle 0er aus dem Datensatz hauen, die Akkuzelle kann nie 0 % haben
         if trip_auswertung3_0.at[x,'soc'] != 0:
-            update_prozessanzeige(x)
             df4 = df4.append( {'soc': float(trip_auswertung3_0.at[x,'soc'])}, ignore_index=True)
-
-    update_prozessanzeige(x+1,"max")    
-    C_soc_durchschnittlich = trip_auswertung3_0['soc'].mean()
-    update_prozessanzeige(x+1)
-    C_soc_start = df4.at[0, "soc"]
-    update_prozessanzeige(x+1)
-    C_soc_min =df4['soc'].min()
-    update_prozessanzeige(x+1)
-    C_soc_max = trip_auswertung3_0['soc'].max()
-    update_prozessanzeige(x+1)
-    C_soc_ende = trip_auswertung3_0['soc'][zeilenanzahl-1]
-    update_prozessanzeige(x+1)
     
+    C_soc_durchschnittlich = trip_auswertung3_0['soc'].mean()
+
+    C_soc_start = df4.at[0, "soc"]
+
+    C_soc_min =df4['soc'].min()
+
+    C_soc_max = trip_auswertung3_0['soc'].max()
+
+    C_soc_ende = trip_auswertung3_0['soc'][zeilenanzahl-1]
+
+  
     verbauch_durchschnitt= float(trip_auswertung3_0['tripfuel'][zeilenanzahl-1])/10/float(trip_auswertung3_0['trip_dist'][zeilenanzahl-1])#verbrauch km/l
     ev_anteil = float(trip_auswertung3_0['trip_dist'][zeilenanzahl-1])+ float(trip_auswertung3_0['trip_ev_dist'][zeilenanzahl-1])/2# Anteil der elektrisch gefahren wurde
     
-    
+
     aktueller_wert = C_soc_start
     plus = 0
     minus = 0
+
     for i in range(zeilenanzahl-1):
     #berechung wie die Akkuladung entwickelt hat
         if int(trip_auswertung3_0['soc'][i]) == aktueller_wert:
@@ -375,7 +386,7 @@ def uebersicht(theard_nr ):
             print("komischer Wert")
         aktueller_wert = int(trip_auswertung3_0['soc'][i])
   
-    
+
     #der eigentliche Datensatz    
     uebersichtswerte ={'trip_nummer' : trip_auswertung3_0['trip_counter'][1],
                         'tag': pd.Timestamp(trip_auswertung3_0['Date'][0]),
@@ -404,7 +415,7 @@ def uebersicht(theard_nr ):
                         'soc_veraenderung': [int(C_soc_start) - int(C_soc_ende) ]
                         
                         } 
-    update_prozessanzeige(x+1)
+   
 
     del C_soc_ende
     del C_soc_max
@@ -423,20 +434,18 @@ def uebersicht(theard_nr ):
                 index=True,
                 index_label='id',
                 if_exists='append')
-    sperre.release()
-    update_prozessanzeige(x+1)    
+    sperre.release()  
     del uebersichtges
 
-    print ("fertig"+tripnummer)
+    print ("fertig"+ str(tripnummer))
     todo_trips[theard_nr]="weiter"
-    time.sleep(1)    
+    time.sleep(0.5)    
     uebersicht(theard_nr=theard_nr)    
 
 def Programmauswahl(programm):
     '''startet die Programme und übergibt ihnen gegebenfalls die Werte'''
-    global prozesse
     global prozess
- 
+    prozesse = []
     if programm =="trips":
         p1= threading.Thread(target=trips, args=(False,))
         p1.start()
@@ -447,12 +456,13 @@ def Programmauswahl(programm):
         zahlx= int(prozess.get())
         p3= threading.Thread(target=trip_handler, args=(zahlx,))
         p3.start()
-        time.sleep(1)
+        time.sleep(0.5)
         for i in range (int(prozess.get())):
             threading.Thread()
             prozesse.append(threading.Thread(target=uebersicht, args=(i,)))
             prozesse[i].start()
-            time.sleep(0.2)
+            time.sleep(1)
+
     else:
         print("unbekanntes Programm")       
         
