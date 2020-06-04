@@ -74,11 +74,12 @@ def plattform_check():
     elif platform == "win32":
         if path == "nicht gesetzt":
             path= "C:/ha-tools/"
-        if is_admin():
-            print("admin")
-        else:
-            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
-            exit()
+        #ADMINRECHTE WERDEN NCIHT BENÖTIGT, falls doch bitte ausklammern
+        #if is_admin():
+        #    print("admin")
+        #else:
+        #    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+        #    exit()
 
     else:
         print ("unbekanntes System")
@@ -221,21 +222,36 @@ def trips(move=True):
             if fnmatch.fnmatch(file,'[Trip]*.txt'):#wenn es eine Trip Datei ist   
                 wertedertxtDatei = pd.read_csv(path+file, sep='\t')#einlesen der Text datei
                 zahl = wertedertxtDatei.shape[0]#Länge der Datei bestimmen - zeilenanzahl für Trip_counter
+                dupli = False
                 try:
                     #verhindert das doppelte Hochladen von txt Dateien
-                    duplikatsuche = pd.read_sql_query('SELECT Date, Time FROM car.fast_log1  where counter = 1',con=engine)
+                    duplikatsuche = pd.read_sql_query('SELECT Date, Time, trip_counter from fast_log1 group by trip_counter;',con=engine)
+                    
+                    
                     for c in range(int(duplikatsuche.shape[0])):
                         if duplikatsuche['Date'][c] == wertedertxtDatei['Date'][0] and duplikatsuche['Time'][c] == wertedertxtDatei['Time'][0]:
                             print("doppelte Datei gefunden")
-                            print (file)
-                            exit()
 
-                except:
+                            if not(os.path.isdir(path+'fehler/')):
+                                
+                                print("kein Ordner vorhanden - Ordner wird erstellt")
+                                os.makedirs(path+'fehler/')
+                            shutil.move(path+file, path+'fehler/')
+                            dupli = True
+                            break 
+                            
+                            
+
+                except Exception as e:
+                    print(e)
                     #kann beim ersten starten ausgelöst werden
-                    duplikatsuche =["None"]
-                    print("Fehler bei der Diplikatsuche")
+                    print("Fehler bei der Diplikatsuche"+ file)
+                    #continue
 
-                
+                if(dupli):
+                    fertig = fertig+1
+                    update_gesamtanzeige(fertig)
+                    continue
            
                 try:#normalbetrieb
                     counter = pd.read_sql_query('SELECT trip_counter FROM fast_log1 ORDER BY fast_log1.trip_counter DESC limit 1;',con=engine)#letzten Trip-counter aus der DB holen
@@ -261,9 +277,13 @@ def trips(move=True):
                     
                 new = wertedertxtDatei.join(DBcounter)#tripcounter plus werte
                 new.to_sql(raw_data_tabelle, con=engine, if_exists='append', index='counter')
-                if move:
-                    shutil.move(file, path+"/Archiv/.")#verschiebt die bearbeitete Datei ins archiv
+            
                 
+                if (move == True):
+                    if not(os.path.isdir(path+"Archiv/")):
+                            print("kein Ordner vorhanden - Ordner wird erstellt")
+                            os.makedirs(path+"Archiv/")      
+                    shutil.move(path+file, path+'Archiv/')#verschiebt die bearbeitete Datei ins archiv
                 #Werte zurücksetzen
                 del counter  
                 del DBcounter
@@ -447,7 +467,7 @@ def Programmauswahl(programm):
     global prozess
     prozesse = []
     if programm =="trips":
-        p1= threading.Thread(target=trips, args=(False,))
+        p1= threading.Thread(target=trips, args=(True,))
         p1.start()
     elif programm == "sprit":
         p2= threading.Thread(target=sprit, args=(False,))
