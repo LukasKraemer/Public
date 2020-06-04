@@ -70,7 +70,7 @@ if($_POST['output']=== "html"){
 
 
   //query to get data from the table
-  $query = "SELECT * FROM uebersicht where tag BETWEEN '$beginn_html' AND '$ende_html' ORDER BY tag, uhrzeit_Beginns ;";
+  $query = "SELECT * FROM $tabellenname_ueberischt where tag BETWEEN '$beginn_html' AND '$ende_html' ORDER BY tag, uhrzeit_Beginns ;";
 
   //execute query
   $result = $mysqli->query($query);
