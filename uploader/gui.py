@@ -343,7 +343,7 @@ def uebersicht(theard_nr):
     print("start")
     '''generiert eine Übersicht, tripsweise'''
     global todo_trips
-    print(todo_trips)
+    #print(todo_trips)
 
     while not(isinstance(todo_trips[theard_nr] , int)):
         time.sleep(0.1)
