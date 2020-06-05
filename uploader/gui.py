@@ -1,6 +1,6 @@
 # HA - Tool version 2.0b
 #geschrieben von Lukas Krämer
-# Ohne Haftung
+# MIT LIZENZ
 # 2020
 
 from tkinter import * 
@@ -19,6 +19,8 @@ import os, subprocess
 from datetime import datetime
 import configparser
 import logging
+from PIL import ImageTk, Image
+import webbrowser
 
 
 
@@ -32,6 +34,7 @@ login_db = str() #überprüfung ob Nutzer an der Datenbank angemeldet ist
 engine= None #Datenbankverbindung
 config.read("config.ini") # Config  File
 
+
 #Tabellennamen und Pfad
 raw_data_tabelle = config.get("table", "raw_data_tabelle")
 sprit_tabelle = config.get("table", "sprit_tabelle")
@@ -39,8 +42,36 @@ uebersichts_tabelle = config.get("table", "uebersichts_tabelle")
 path = config.get("system", "path")
 todo_trips= list()
 
+
+if int(config.get("user", "farbmodi")) == 1:
+    Farbmodus ='Farbmodus1'
+else:
+    Farbmodus ='Farbmodus2'
+
+if int(config.get("user", "schriftfarbe")) == 1:
+    schriftfarbe= "schriftfarbe1"
+else:
+    schriftfarbe = "schriftfarbe2"    
+
+rot_schrift = int(config.get(schriftfarbe, "rot"))
+gruen_schrift = int(config.get(schriftfarbe, "gruen"))
+blau_schrift = int(config.get(schriftfarbe, "blau"))
+
+rot = int(config.get(Farbmodus, "rot"))
+gruen = int(config.get(Farbmodus, "gruen"))
+blau = int(config.get(Farbmodus, "blau"))
+
+farbcode_hintergrund= (rot, gruen, blau)
+
+
+schriftfarbe= (rot_schrift, gruen_schrift, blau_schrift)
+
+
+
+  
+
 #logger - noch nicht eingebaut
-logging.basicConfig(filename='app.log', filemode='a', format=f'%(name)s - {platform} - {now.strftime("%d/%m/%Y, %H:%M:%S")} - %(levelname)s - %(message)s')
+#logging.basicConfig(filename='app.log', filemode='a', format=f'%(name)s - {platform} - {now.strftime("%d/%m/%Y, %H:%M:%S")} - %(levelname)s - %(message)s')
 #logging.warning("fehler")
 
 
@@ -90,6 +121,17 @@ def plattform_check():
         print("kein Ordner vorhanden - Ordner wird erstellt")
         os.makedirs(path)
 
+
+def _from_rgb(rgb):
+    """translates an rgb tuple of int to a tkinter friendly color code
+    """
+    return "#%02x%02x%02x" % rgb 
+
+def open_github(event):
+    try:
+        webbrowser.open("https://github.com/LukasKraemer/HA_Tool")
+    except:
+        print("fehler beim Seite öffnen")
 def login_value(create="No"):
     '''Verbindung zur Datenbank wird hergestellt und ein kleiner log eintrag auf die DB gemacht'''
     global login_db
@@ -214,7 +256,7 @@ def trips(move=True):
         for file in os.listdir(path):
             if fnmatch.fnmatch(file,'[Trip_]*.txt'):
                 menge_trips = int(menge_trips) +1
-            update_gesamtanzeige(menge_trips, "max")    
+        update_gesamtanzeige(menge_trips, "max")    
 
 
         for file in os.listdir(path):#jede Datei im Ordner anschauen
@@ -343,7 +385,7 @@ def uebersicht(theard_nr):
     print("start")
     '''generiert eine Übersicht, tripsweise'''
     global todo_trips
-    #print(todo_trips)
+    print(todo_trips)
 
     while not(isinstance(todo_trips[theard_nr] , int)):
         time.sleep(0.1)
@@ -490,28 +532,38 @@ plattform_check()# überprüfung des betriebsystem
 
 #Grafische Anzeige
 root = Tk()
+
+
+#Hintergrundfarbe für alle Elemtente
+hintergrundfarbe= _from_rgb(farbcode_hintergrund)
+schriftfarbe = _from_rgb(schriftfarbe)
+
 root.title('HA- Tool')
+root.iconphoto(True, PhotoImage(file="Logo.png"))
 root.geometry("420x350")
+root.configure(bg=hintergrundfarbe) 
 
 gesFrame = LabelFrame()
 gesFrame.grid(column=0,row=1)
+gesFrame.configure(bg=hintergrundfarbe, foreground=schriftfarbe) 
 
 #grafikoberfläche
 buttonFrame = LabelFrame(gesFrame,text="Programmauswahl")
 buttonFrame.grid(column=0,row=1)
+buttonFrame.configure(bg=hintergrundfarbe, foreground=schriftfarbe) 
 
 
 #Knopf der Alle Trips einläd
-button1 = ttk.Button(buttonFrame, text="Trips",command= lambda pragramm="trips" :Programmauswahl(pragramm))
+button1 = ttk.Button(buttonFrame, text="Trips" ,command= lambda pragramm="trips" :Programmauswahl(pragramm))
 button1.grid(column = 0, row = 2,  padx=5, pady=5)
 
 #Läd die Sprittabelle ein
-button1 = ttk.Button(buttonFrame, text="Sprit ",command= lambda pragramm="sprit" :Programmauswahl(pragramm))
-button1.grid(column = 1, row = 2, padx=5, pady=5)
+button2 = ttk.Button(buttonFrame, text="Sprit " ,command= lambda pragramm="sprit" :Programmauswahl(pragramm))
+button2.grid(column = 1, row = 2, padx=5, pady=5)
 
 #Übersicht wird erstellt - CPU Anzahl bearbeiten und Multicore
-button1 = ttk.Button( buttonFrame, text="Übersicht ",command=lambda pragramm="ueberischt" :Programmauswahl(pragramm))
-button1.grid(column = 3, row = 2, padx=5, pady=5,)
+button3 = ttk.Button( buttonFrame, text="Übersicht ", command=lambda pragramm="ueberischt" :Programmauswahl(pragramm))
+button3.grid(column = 3, row = 2, padx=5, pady=5)
 
 #Prozess auswahl
 prozess = StringVar(root)
@@ -526,6 +578,7 @@ prozessanzahl.grid(row = 2, column =4)
 
 progesFrame = LabelFrame(gesFrame,text="Gesamtfortschritt")
 progesFrame.grid(column=0,row=3)
+progesFrame.configure(bg=hintergrundfarbe, foreground=schriftfarbe) 
 
 #Prozessor die den gesammten Fortschritt anzeigen soll
 progressBarges = ttk.Progressbar(progesFrame, orient="horizontal", length=400)
@@ -540,13 +593,37 @@ progressBarpro['value']=0
 
 loginFrame = LabelFrame(gesFrame,text="Login für DB")
 loginFrame.grid(column=0,row=6)
+loginFrame.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+
+
+
+image = Image.open("Logo.png")
+image = image.resize((100,100), Image.ANTIALIAS)
+photoImg =  ImageTk.PhotoImage(image)
+
+label = Label(loginFrame,image=photoImg)
+label.image = photoImg # this line need to prevent gc
+label.bind( "<Button>", open_github )
+label.grid(row=7, column=5, padx=5, pady=5, rowspan=5)
 
 #Beschriftungen
-Label(loginFrame, text="Benutzername*").grid(row=7)
-Label(loginFrame, text="Passwort*").grid(row=8)
-Label(loginFrame, text="Schema").grid(row=9)
-Label(loginFrame, text="Port").grid(row=10)
-Label(loginFrame, text="IP Adresse").grid(row=11)
+l1= Label(loginFrame, text="Benutzername*")
+l2= Label(loginFrame, text="Passwort*")
+l3= Label(loginFrame, text="Schema")
+l4= Label(loginFrame, text="Port")
+l5= Label(loginFrame, text="IP Adresse")
+
+l1.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+l2.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+l3.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+l4.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+l5.configure(bg=hintergrundfarbe, foreground=schriftfarbe)
+
+l1.grid(row=7)
+l2.grid(row=8)
+l3.grid(row=9)
+l4.grid(row=10)
+l5.grid(row=11)
 
 
 #logindaten
