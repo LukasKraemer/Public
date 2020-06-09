@@ -2,6 +2,10 @@
 #geschrieben von Lukas Krämer
 # MIT LIZENZ
 # 2020
+#gelsesen forum: 1813
+# 32 downlaods / 19
+#275 aufrufe / 6 einmalige
+#10/4 forum
 
 from tkinter import * 
 from tkinter import ttk
@@ -21,6 +25,7 @@ import configparser
 import logging
 from PIL import ImageTk, Image
 import webbrowser
+
 
 
 
@@ -160,8 +165,11 @@ def login_value(create="No"):
             Schema= (DB_schema.get())
         else:
             Schema = "car"
-            
-        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{Nutzername}:{Passwort}@localhost:{Port}/{Schema}'# [treiber]://[benutzername][passwort]@[IP]/[Schema in DB]
+
+        adresse = ip.get()    
+        ssl ="true"
+        
+        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{Nutzername}:{Passwort}@{adresse}:{Port}/{Schema}'# [treiber]://[benutzername][passwort]@[IP]/[Schema in DB]
         engine = sqlalchemy.create_engine(SQLALCHEMY_DATABASE_URI)#herstellen der DB Verbindung
         print(SQLALCHEMY_DATABASE_URI)
     else:
